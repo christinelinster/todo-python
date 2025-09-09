@@ -25,3 +25,10 @@ def complete_all_todos(lst):
     for todo in lst['todos']:
         todo['completed'] = True
     return None
+
+def todos_remaining(lst):
+    return sum(1 for todo in lst['todos'] if not todo['completed'])
+
+def is_list_completed(lst):
+    return len(lst['todos']) > 0 and todos_remaining(lst) == 0
+

@@ -17,10 +17,18 @@ from todos.utils import (
     error_for_todo, 
     find_list_by_id, 
     find_todo_by_id,
+    is_list_completed,
+    todos_remaining,
     )
 
 app = Flask(__name__)
 app.secret_key='secret1'
+
+@app.context_processor
+def list_utilities_processor():
+    return dict(
+        is_list_completed=is_list_completed
+    )
 
 @app.before_request
 def initialize_session():
@@ -31,9 +39,32 @@ def initialize_session():
 def index():
     return redirect(url_for('get_lists'))
 
-@app.route("/lists")
+@app.route("/lists", methods=["GET"])
 def get_lists():
-    return render_template('lists.html', lists=session['lists'])
+    return render_template('lists.html', 
+                           lists=session['lists'],
+                           todos_remaining=todos_remaining)
+
+@app.route("/lists/new")
+def add_todo_list():
+    return render_template('new_list.html')
+
+@app.route("/lists/<list_id>")
+def show_list(list_id):
+    lst = find_list_by_id(list_id, session['lists'])
+    if not lst:
+        raise NotFound(description="List not found")
+    
+    return render_template('list.html', 
+                           lst=lst)
+
+@app.route("/lists/<list_id>/edit")
+def edit_list(list_id):
+    lst = find_list_by_id(list_id, session['lists'])
+    if not lst:
+        raise NotFound(description="List not found")
+    
+    return render_template('edit_list.html', lst=lst)
 
 @app.route("/lists", methods=["POST"])
 def create_list():
@@ -53,17 +84,6 @@ def create_list():
     flash("The list has been created.", "success")
     session.modified = True
     return redirect(url_for('get_lists'))
-
-@app.route("/lists/new")
-def add_todo_list():
-    return render_template('new_list.html')
-
-@app.route("/lists/<list_id>")
-def show_list(list_id):
-    lst = find_list_by_id(list_id, session['lists'])
-    if not lst:
-        raise NotFound(description="List not found")
-    return render_template('list.html', lst=lst)
 
 @app.route("/lists/<list_id>/todos", methods=["POST"])
 def add_todo(list_id):
@@ -130,14 +150,6 @@ def mark_all_completed(list_id):
     flash("All todos have been marked completed.", "success")
     session.modified = True
     return redirect(url_for('show_list', list_id=list_id))
-
-@app.route("/lists/<list_id>/edit")
-def edit_list(list_id):
-    lst = find_list_by_id(list_id, session['lists'])
-    if not lst:
-        raise NotFound(description="List not found")
-    
-    return render_template('edit_list.html', lst=lst)
 
 @app.route("/lists/<list_id>/delete", methods=["POST"])
 def delete_list(list_id):

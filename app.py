@@ -18,6 +18,7 @@ from todos.utils import (
     find_list_by_id, 
     find_todo_by_id,
     is_list_completed,
+    sort_lists,
     todos_remaining,
     )
 
@@ -39,10 +40,11 @@ def initialize_session():
 def index():
     return redirect(url_for('get_lists'))
 
-@app.route("/lists", methods=["GET"])
+@app.route("/lists")
 def get_lists():
+    lists = sort_lists(session['lists'])
     return render_template('lists.html', 
-                           lists=session['lists'],
+                           lists=lists,
                            todos_remaining=todos_remaining)
 
 @app.route("/lists/new")

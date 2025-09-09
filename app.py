@@ -10,7 +10,14 @@ from flask import (
     session,
     )
 from werkzeug.exceptions import NotFound
-from todos.utils import error_for_list_title, find_list_by_id, error_for_todo, find_todo_by_id
+from todos.utils import (
+    complete_all_todos,
+    delete_todo_by_id,
+    error_for_list_title, 
+    error_for_todo, 
+    find_list_by_id, 
+    find_todo_by_id,
+    )
 
 app = Flask(__name__)
 app.secret_key='secret1'
@@ -92,9 +99,57 @@ def update_todo_status(list_id, todo_id):
 
     todo['completed'] = (request.form['completed'] == 'True')
 
-    flash("The todo has been updated.", "sucess")
+    flash("The todo has been updated.", "success")
     session.modified = True
     return redirect(url_for('show_list', list_id=list_id))
+
+@app.route("/lists/<list_id>/todos/<todo_id>/delete", methods=["POST"])
+def delete_todo(list_id, todo_id):
+    lst = find_list_by_id(list_id, session['lists'])
+    if not lst:
+        raise NotFound(description="List not found")
+    
+    todo = find_todo_by_id(todo_id, lst['todos'])
+    if not todo:
+        raise NotFound(description="Todo not found")
+    
+    delete_todo_by_id(todo_id, lst)
+
+    flash("The todo has been successfully deleted.", "success")
+    session.modified = True
+    return redirect(url_for('show_list', list_id=list_id))
+
+@app.route("/lists/<list_id>/complete_all", methods=["POST"])
+def mark_all_completed(list_id):
+    lst = find_list_by_id(list_id, session['lists'])
+    if not lst:
+        raise NotFound(description="List not found")
+    
+    complete_all_todos(lst)
+
+    flash("All todos have been marked completed.", "success")
+    session.modified = True
+    return redirect(url_for('show_list', list_id=list_id))
+
+@app.route("/lists/<list_id>/edit")
+def edit_list(list_id):
+    lst = find_list_by_id(list_id, session['lists'])
+    if not lst:
+        raise NotFound(description="List not found")
+    
+    return render_template('edit_list.html', lst=lst)
+
+@app.route("/lists/<list_id>/delete", methods=["POST"])
+def delete_list(list_id):
+    lst = find_list_by_id(list_id, session['lists'])
+    if not lst:
+        raise NotFound(description="List not found")
+    
+    session['lists'] = [lst for lst in session['lists'] if lst['id'] != list_id]
+    
+    flash("List deleted", "success")
+    session.modified = True
+    return redirect(url_for('get_lists', lists=session['lists']))
 
 if __name__ == "__main__":
     app.run(debug=True, port=5003)

@@ -18,7 +18,8 @@ from todos.utils import (
     find_list_by_id, 
     find_todo_by_id,
     is_list_completed,
-    sort_lists,
+    is_todo_completed,
+    sort_items,
     todos_remaining,
     )
 
@@ -42,7 +43,7 @@ def index():
 
 @app.route("/lists")
 def get_lists():
-    lists = sort_lists(session['lists'])
+    lists = sort_items(session['lists'], is_list_completed)
     return render_template('lists.html', 
                            lists=lists,
                            todos_remaining=todos_remaining)
@@ -57,6 +58,7 @@ def show_list(list_id):
     if not lst:
         raise NotFound(description="List not found")
     
+    lst['todos'] = sort_items(lst['todos'], is_todo_completed)
     return render_template('list.html', 
                            lst=lst)
 

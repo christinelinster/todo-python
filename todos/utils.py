@@ -32,10 +32,12 @@ def todos_remaining(lst):
 def is_list_completed(lst):
     return len(lst['todos']) > 0 and todos_remaining(lst) == 0
 
-def sort_lists(lists):
-    sorted_lists = sorted(lists, key=lambda lst: lst['title'].lower())
-    incomplete_lists = [lst for lst in sorted_lists if not is_list_completed(lst)]
-    complete_lists = [lst for lst in sorted_lists if is_list_completed(lst)]
+def is_todo_completed(todo):
+    return todo['completed']
 
-    return incomplete_lists + complete_lists
-
+def sort_items(items, item_completed):
+    sorted_items = sorted(items, key=lambda i: i['title'].lower())
+    incomplete_items = [i for i in sorted_items if not item_completed(i)]
+    complete_items = [i for i in sorted_items if item_completed(i)]
+    
+    return incomplete_items + complete_items
